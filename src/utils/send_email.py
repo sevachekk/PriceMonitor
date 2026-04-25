@@ -16,11 +16,14 @@ logger = logging.getLogger(__name__)
 USERNAME = settings.EMAIL
 PASSWORD = (settings.EMAIL_PASSWORD or "").replace(" ", "")
 
-SMTP_HOST = "smtp.gmail.com"
-SMTP_TIMEOUT_SECONDS = 15
+SMTP_HOST = settings.SMTP_HOST
+SMTP_TIMEOUT_SECONDS = settings.SMTP_TIMEOUT_SECONDS
 SMTP_TRANSPORTS = (
-    {"port": 465, "use_tls": True, "start_tls": False},
-    {"port": 587, "use_tls": False, "start_tls": True},
+    {
+        "port": settings.SMTP_PORT,
+        "use_tls": settings.SMTP_USE_TLS,
+        "start_tls": settings.SMTP_START_TLS,
+    },
 )
 
 # создаём безопасный SSLContext с использованием certifi

@@ -1,0 +1,11 @@
+.DS_Store
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+cookies/
+backups/
+src/celerybeat-schedule
+src/celerybeat-schedule-shm
+src/celerybeat-schedule-wal

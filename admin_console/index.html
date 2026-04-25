@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Price Monitor Admin</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop stop-color='%230d4f8b'/%3E%3Cstop offset='1' stop-color='%23f0715c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='%2310161f'/%3E%3Cpath d='M14 42h10l6-18 8 26 6-16h6' fill='none' stroke='url(%23g)' stroke-linecap='round' stroke-linejoin='round' stroke-width='5'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="background-glow background-glow-a"></div>
+    <div class="background-glow background-glow-b"></div>
+    <div class="background-mesh"></div>
+
+    <main class="shell">
+      <section id="loginView" class="login-view">
+        <div class="panel login-panel">
+          <div class="login-grid">
+            <div class="login-copy">
+              <p class="eyebrow">Панель управления</p>
+              <h1>Управление мониторингом, заданиями и правилами</h1>
+              <div class="login-highlights">
+                <article class="highlight-card">
+                  <span>Источники</span>
+                  <strong>Лимиты, блокировки и статус источников</strong>
+                </article>
+                <article class="highlight-card">
+                  <span>Задания</span>
+                  <strong>Гибкое расписание, повторы и оркестрация</strong>
+                </article>
+                <article class="highlight-card">
+                  <span>Безопасность</span>
+                  <strong>Роли операторов и доступ супер-админа</strong>
+                </article>
+              </div>
+            </div>
+
+            <div class="login-form-card">
+              <form id="loginForm" class="stack-form">
+                <label>
+                  <span>Логин</span>
+                  <input name="username" type="text" autocomplete="username" required />
+                </label>
+                <label>
+                  <span>Пароль</span>
+                  <input name="password" type="password" autocomplete="current-password" required />
+                </label>
+                <button class="primary-button" type="submit">Войти в панель</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="appView" class="app-view hidden">
+        <aside class="sidebar panel">
+          <div class="brand-block">
+            <p class="eyebrow">Price Monitor</p>
+            <h2 id="consoleTitle">Панель управления</h2>
+          </div>
+
+          <div class="identity-card">
+            <p id="currentUserName">-</p>
+            <span id="currentUserRole" class="role-chip">-</span>
+          </div>
+
+          <nav class="nav-list">
+            <button class="nav-item active" data-section="dashboard">Обзор</button>
+            <button class="nav-item" data-section="sources">Источники</button>
+            <button class="nav-item" data-section="jobs">Задания</button>
+            <button class="nav-item" data-section="alerts">Правила</button>
+            <button class="nav-item" data-section="logs">Логи</button>
+            <button class="nav-item super-admin-only" data-section="users">Пользователи</button>
+            <button class="nav-item super-admin-only" data-section="settings">Платформа</button>
+          </nav>
+
+          <div class="sidebar-actions">
+            <button id="refreshButton" class="ghost-button" type="button">Обновить данные</button>
+            <button id="logoutButton" class="ghost-button" type="button">Выйти</button>
+          </div>
+        </aside>
+
+        <section class="workspace">
+          <header class="workspace-header panel">
+            <div>
+              <p class="eyebrow">Административная зона</p>
+              <h1 id="sectionTitle">Обзор</h1>
+            </div>
+          </header>
+
+          <section id="dashboardSection" class="section-stack">
+            <div id="dashboardStats" class="stats-grid"></div>
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Последние события</h3>
+                <p>Сюда попадают логины, изменения настроек и запуски мониторинга.</p>
+              </div>
+              <div id="dashboardLogs" class="table-host"></div>
+            </div>
+          </section>
+
+          <section id="sourcesSection" class="section-stack hidden">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Источники и лимиты</h3>
+                <p>Оператор управляет источниками, запросными лимитами и политикой блокировки.</p>
+              </div>
+              <form id="sourceForm" class="grid-form">
+                <input type="hidden" name="sourceId" />
+                <label><span>Название</span><input name="name" type="text" required /></label>
+                <label><span>Базовый URL</span><input name="base_url" type="url" required /></label>
+                <label><span>Запросов в минуту</span><input name="requests_per_minute" type="number" min="1" value="20" required /></label>
+                <label><span>Порог ошибок</span><input name="failure_threshold" type="number" min="1" value="3" required /></label>
+                <label><span>Минут блокировки</span><input name="block_duration_minutes" type="number" min="1" value="30" required /></label>
+                <label class="checkbox-field"><input name="enabled" type="checkbox" checked /><span>Источник активен</span></label>
+                <label class="wide"><span>Заметки</span><textarea name="notes" rows="3"></textarea></label>
+                <div class="form-actions wide">
+                  <button class="primary-button" type="submit">Сохранить источник</button>
+                  <button class="ghost-button" type="button" data-reset-form="source">Сбросить</button>
+                </div>
+              </form>
+            </div>
+            <div class="panel">
+              <div id="sourcesTable" class="table-host"></div>
+            </div>
+          </section>
+
+          <section id="jobsSection" class="section-stack hidden">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Задания мониторинга</h3>
+                <p>Расписание теперь хранится в БД, а воркер выполняет только due jobs.</p>
+              </div>
+              <form id="jobForm" class="grid-form">
+                <input type="hidden" name="jobId" />
+                <label><span>Название</span><input name="name" type="text" required /></label>
+                <label><span>Интервал запуска (мин)</span><input name="schedule_minutes" type="number" min="1" value="30" required /></label>
+                <label><span>Повторных попыток</span><input name="retry_attempts" type="number" min="0" value="2" required /></label>
+                <label><span>Пауза между повторами (сек)</span><input name="retry_backoff_seconds" type="number" min="0" value="5" required /></label>
+                <label><span>Задержка между запросами (мс)</span><input name="request_delay_ms" type="number" min="0" value="300" required /></label>
+                <label><span>Лимит товаров за запуск</span><input name="limit_products_per_run" type="number" min="1" placeholder="Без лимита" /></label>
+                <div class="wide picker-field">
+                  <span>Правила мониторинга</span>
+                  <div id="jobAlertPicker" class="selection-list"></div>
+                  <p class="field-hint">Если ничего не выбрано, задание будет работать по всем активным правилам.</p>
+                </div>
+                <label class="wide"><span>Описание</span><textarea name="description" rows="3"></textarea></label>
+                <label class="checkbox-field"><input name="enabled" type="checkbox" checked /><span>Задание активно</span></label>
+                <div class="form-actions wide">
+                  <button class="primary-button" type="submit">Сохранить задание</button>
+                  <button class="ghost-button" type="button" data-reset-form="job">Сбросить</button>
+                </div>
+              </form>
+            </div>
+            <div class="panel">
+              <div id="jobsTable" class="table-host"></div>
+            </div>
+          </section>
+
+          <section id="alertsSection" class="section-stack hidden">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Правила мониторинга</h3>
+                <p>Управление правилами оповещений без перехода в старые endpoint’ы.</p>
+              </div>
+              <form id="alertForm" class="grid-form">
+                <input type="hidden" name="alertId" />
+                <label><span>ID товара</span><input name="product_id" type="number" min="1" /></label>
+                <label><span>ID конкурента</span><input name="competitor_id" type="number" min="1" /></label>
+                <label>
+                  <span>Тип правила</span>
+                  <select name="type">
+                    <option value="zscore">zscore</option>
+                    <option value="pct_change">pct_change</option>
+                    <option value="below_threshold">below_threshold</option>
+                  </select>
+                </label>
+                <label class="checkbox-field"><input name="enabled" type="checkbox" checked /><span>Правило активно</span></label>
+                <label class="wide"><span>Параметры (JSON)</span><textarea name="params" rows="5">{}</textarea></label>
+                <label class="wide"><span>Получатели (JSON-массив)</span><textarea name="recipients" rows="4">[]</textarea></label>
+                <div class="form-actions wide">
+                  <button class="primary-button" type="submit">Сохранить правило</button>
+                  <button class="ghost-button" type="button" data-reset-form="alert">Сбросить</button>
+                </div>
+              </form>
+            </div>
+            <div class="panel">
+              <div id="alertsTable" class="table-host"></div>
+            </div>
+          </section>
+
+          <section id="logsSection" class="section-stack hidden">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Журнал действий</h3>
+                <p>Видно изменения сущностей, ручные и плановые запуски задач.</p>
+              </div>
+              <div class="inline-actions">
+                <label><span>Лимит строк</span><input id="logsLimit" type="number" min="1" max="500" value="100" /></label>
+                <button id="reloadLogsButton" class="ghost-button" type="button">Перезагрузить логи</button>
+                <button id="exportLogsButton" class="ghost-button" type="button">Экспорт логов</button>
+              </div>
+              <div id="logsTable" class="table-host"></div>
+            </div>
+          </section>
+
+          <section id="usersSection" class="section-stack hidden">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Пользователи панели</h3>
+                <p>Супер-админ управляет учётками операторов и другими администраторами.</p>
+              </div>
+              <form id="userForm" class="grid-form">
+                <input type="hidden" name="userId" />
+                <label><span>Логин</span><input name="username" type="text" required /></label>
+                <label><span>Полное имя</span><input name="full_name" type="text" /></label>
+                <label><span>Пароль</span><input name="password" type="password" placeholder="Только при создании или смене" /></label>
+                <label>
+                  <span>Роль</span>
+                  <select name="role">
+                    <option value="operator">Оператор</option>
+                    <option value="super_admin">Супер-админ</option>
+                  </select>
+                </label>
+                <label class="checkbox-field"><input name="is_active" type="checkbox" checked /><span>Пользователь активен</span></label>
+                <div class="form-actions wide">
+                  <button class="primary-button" type="submit">Сохранить пользователя</button>
+                  <button class="ghost-button" type="button" data-reset-form="user">Сбросить</button>
+                </div>
+              </form>
+            </div>
+            <div class="panel">
+              <div id="usersTable" class="table-host"></div>
+            </div>
+          </section>
+
+          <section id="settingsSection" class="section-stack hidden">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Настройки платформы</h3>
+                <p>Супер-админ управляет общими ключами и системными параметрами.</p>
+              </div>
+              <form id="settingForm" class="grid-form">
+                <input type="hidden" name="settingId" />
+                <label><span>Ключ</span><input name="key" type="text" required /></label>
+                <label class="wide"><span>Описание</span><input name="description" type="text" /></label>
+                <label class="wide"><span>Значение (JSON)</span><textarea name="value" rows="5">{}</textarea></label>
+                <div class="form-actions wide">
+                  <button class="primary-button" type="submit">Сохранить настройку</button>
+                  <button class="ghost-button" type="button" data-reset-form="setting">Сбросить</button>
+                </div>
+              </form>
+            </div>
+            <div class="panel">
+              <div id="settingsTable" class="table-host"></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Резервные копии</h3>
+                <p>Создание и восстановление резервных копий критичных данных прямо из интерфейса.</p>
+              </div>
+              <div class="inline-actions">
+                <button id="createBackupButton" class="primary-button" type="button">Создать резервную копию</button>
+              </div>
+              <div id="backupsTable" class="table-host"></div>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <div id="logDetailsModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="logDetailsTitle">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Просмотр деталей</p>
+            <h3 id="logDetailsTitle">Детали события</h3>
+          </div>
+          <button id="closeLogDetailsModalButton" class="ghost-button" type="button">Закрыть</button>
+        </div>
+        <div class="modal-body">
+          <pre id="logDetailsContent" class="json-viewer"></pre>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+  </html>

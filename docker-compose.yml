@@ -1,0 +1,97 @@
+services:
+  fastapi:
+    build:
+      context: .
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      PYTHONPATH: /app/src
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      APP_BASE_URL: http://fastapi:8000
+      BACKUP_DIR: /app/data/backups
+      COOKIES_DIR: /app/cookies
+      ADMIN_AUTH_SECRET: ${ADMIN_AUTH_SECRET:-change-this-admin-secret}
+      ADMIN_BOOTSTRAP_USERNAME: ${ADMIN_BOOTSTRAP_USERNAME:-superadmin}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-superadmin123}
+      ADMIN_BOOTSTRAP_FULL_NAME: ${ADMIN_BOOTSTRAP_FULL_NAME:-Bootstrap Super Admin}
+      ADMIN_ACCESS_TOKEN_TTL_MINUTES: ${ADMIN_ACCESS_TOKEN_TTL_MINUTES:-480}
+      INTERNAL_TASK_SECRET: ${INTERNAL_TASK_SECRET:-internal-task-secret}
+      CELERY_BEAT_INTERVAL_MINUTES: ${CELERY_BEAT_INTERVAL_MINUTES:-5}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+    working_dir: /app/src
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "${WEB_PORT:-8080}:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  celery-worker:
+    build:
+      context: .
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      PYTHONPATH: /app/src
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      APP_BASE_URL: http://fastapi:8000
+      INTERNAL_TASK_SECRET: ${INTERNAL_TASK_SECRET:-internal-task-secret}
+      BACKUP_DIR: /app/data/backups
+      COOKIES_DIR: /app/cookies
+      CELERY_BEAT_INTERVAL_MINUTES: ${CELERY_BEAT_INTERVAL_MINUTES:-5}
+    working_dir: /app/src
+    command: ["celery", "-A", "celery_app.worker:celery", "worker", "--loglevel=info"]
+    depends_on:
+      redis:
+        condition: service_healthy
+      fastapi:
+        condition: service_started
+
+  celery-beat:
+    build:
+      context: .
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      PYTHONPATH: /app/src
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      APP_BASE_URL: http://fastapi:8000
+      INTERNAL_TASK_SECRET: ${INTERNAL_TASK_SECRET:-internal-task-secret}
+      BACKUP_DIR: /app/data/backups
+      COOKIES_DIR: /app/cookies
+      CELERY_BEAT_INTERVAL_MINUTES: ${CELERY_BEAT_INTERVAL_MINUTES:-5}
+    working_dir: /app/src
+    command:
+      [
+        "celery",
+        "-A",
+        "celery_app.worker:celery",
+        "beat",
+        "--loglevel=info",
+      ]
+    depends_on:
+      redis:
+        condition: service_healthy
+      fastapi:
+        condition: service_started

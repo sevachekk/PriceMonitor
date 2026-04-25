@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     
     EMAIL: str
     EMAIL_PASSWORD: str
+    SMTP_HOST: str = "smtp.timeweb.ru"
+    SMTP_PORT: int = 465
+    SMTP_USE_TLS: bool = True
+    SMTP_START_TLS: bool = False
+    SMTP_TIMEOUT_SECONDS: int = 30
     
     class Config:
         env_file = (".env", "../.env", "src/.env")

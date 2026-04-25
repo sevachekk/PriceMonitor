@@ -3,10 +3,9 @@
 ## Что уже подготовлено
 
 - туннелирование убрано из проекта
-- административный фронтенд отдаётся самим `fastapi`
-- публичный сервис в `docker-compose.yml` — `fastapi`
-- `docker-compose.yml` не использует `volumes`
-- хост-порт по умолчанию — `8080`, а не `80`
+- административный фронтенд и API доступны через встроенный `nginx`
+- публичный сервис в `docker-compose.yml` — `nginx`
+- хост-порт по умолчанию — `80`
 
 Это совместимо с требованиями Timeweb App Platform для Docker Compose:
 
@@ -19,7 +18,7 @@
 Минимально заполняются:
 
 ```env
-WEB_PORT=8080
+NGINX_HTTP_PORT=80
 
 DB_URL=postgresql+asyncpg://user:password@host:5432/db
 DB_NAME=db
@@ -64,9 +63,9 @@ docker compose up --build -d
 
 После запуска:
 
-- панель: `http://localhost:8080/`
-- Swagger: `http://localhost:8080/docs`
-- health: `http://localhost:8080/health`
+- панель: `http://localhost/`
+- Swagger: `http://localhost/docs`
+- health: `http://localhost/health`
 
 ## 4. Деплой в Timeweb App Platform
 
@@ -83,22 +82,22 @@ docker compose up --build -d
 
 - панель будет открываться по основному домену приложения
 - backend API будет доступен на этом же домене
-- `celery-worker`, `celery-beat` и `redis` поднимутся внутри одного compose-стека
+- `nginx`, `fastapi`, `celery-worker`, `celery-beat` и `redis` поднимутся внутри одного compose-стека
 
 ## Вариант для обычного VDS через nginx
 
-Если это не App Platform, а обычный VDS, удобнее оставить приложение на `127.0.0.1:8080`, а домен обслуживать через `nginx`.
+Если ты хочешь использовать отдельный системный `nginx` на хосте вместо docker-nginx, оставлен запасной шаблон:
 
 Шаблон конфига:
 
-- [deploy/nginx/pricemonitor.conf.example](/Users/sevak/Desktop/PriceMonitor/deploy/nginx/pricemonitor.conf.example)
+- [deploy/nginx/pricemonitor.conf](/Users/sevak/Desktop/PriceMonitor/deploy/nginx/pricemonitor.conf)
 
 Шаги:
 
-1. Оставьте в `.env`:
+1. Оставьте docker-приложение на `8080`:
 
 ```env
-WEB_PORT=8080
+NGINX_HTTP_PORT=8080
 ```
 
 2. Скопируйте шаблон nginx-конфига на сервер и замените:
@@ -120,9 +119,9 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-После этого домен будет проксироваться на Docker-приложение на `127.0.0.1:8080`.
+После этого системный `nginx` будет проксироваться на Docker-приложение на `127.0.0.1:8080`.
 
 ## Примечания
 
-- если вы деплоите не в App Platform, а на обычный VPS, можно поставить `WEB_PORT=80`
+- если используешь встроенный docker-nginx, оставь `NGINX_HTTP_PORT=80`
 - перед публикацией лучше удалить из локального `.env` старые переменные туннелей и заменить их значениями из нового `.env.example`

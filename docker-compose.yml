@@ -1,4 +1,21 @@
 services:
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+    volumes:
+      - ./deploy/nginx/docker.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      fastapi:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   fastapi:
     build:
       context: .
@@ -19,11 +36,9 @@ services:
       ADMIN_ACCESS_TOKEN_TTL_MINUTES: ${ADMIN_ACCESS_TOKEN_TTL_MINUTES:-480}
       INTERNAL_TASK_SECRET: ${INTERNAL_TASK_SECRET:-internal-task-secret}
       CELERY_BEAT_INTERVAL_MINUTES: ${CELERY_BEAT_INTERVAL_MINUTES:-5}
-      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost,http://127.0.0.1,http://localhost:8080,http://127.0.0.1:8080}
     working_dir: /app/src
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-    ports:
-      - "${WEB_PORT:-8080}:8000"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
       interval: 15s

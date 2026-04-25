@@ -2,12 +2,13 @@
 
 Полностью dockerized-проект для серверного деплоя:
 
+- `nginx` — публичный reverse proxy для домена
 - `fastapi` — backend, REST/API слой и выдача административного фронтенда
 - `celery-worker` — фоновые задачи
 - `celery-beat` — запуск периодических задач
 - `redis` — брокер Celery
 
-Туннелирование из проекта удалено. Фронтенд теперь отдаётся самим backend и работает через тот же origin.
+Туннелирование из проекта удалено. Снаружи проект принимает трафик через `nginx`, а внутри Docker-сети он проксирует всё на `fastapi`.
 
 ## Быстрый старт
 
@@ -22,13 +23,13 @@ docker compose up --build -d
 По умолчанию приложение будет доступно на:
 
 ```text
-http://localhost:8080
+http://localhost
 ```
 
 Swagger:
 
 ```text
-http://localhost:8080/docs
+http://localhost/docs
 ```
 
 ## Что важно для продакшена
@@ -38,8 +39,7 @@ http://localhost:8080/docs
   - `ADMIN_BOOTSTRAP_PASSWORD`
   - `ADMIN_BOOTSTRAP_FULL_NAME`
 - резервные копии сохраняются в `BACKUP_DIR`
-- фронтенд уже привязан к backend через один контейнер FastAPI, отдельный API URL не нужен
-- bind mounts не требуются: это удобно для Timeweb App Platform
+- `nginx` уже включён в `docker-compose`, отдельный системный nginx не нужен
 - SMTP теперь можно настраивать через env:
   - `SMTP_HOST`
   - `SMTP_PORT`
@@ -67,9 +67,8 @@ base64 -i cookies/cookie_wb.txt | tr -d '\n'
 
 Что учёл:
 
-- первый сервис в `docker-compose.yml` — это `fastapi`, чтобы именно он был основным публичным сервисом
-- хост-порт по умолчанию не `80`, а `8080`
-- из compose убраны `volumes`
+- публичный вход теперь идёт через `nginx`
+- по умолчанию `nginx` слушает `80`
 - не используется `network_mode: host`
 
 Документация Timeweb:
